@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>光计算与光生成模型 · 第一阶段学习手册</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f6f8fb; --card:#ffffff; --text:#172033; --muted:#5d6a7f;
+  --line:#dfe5ee; --accent:#315efb; --accent2:#0b8f72; --warn:#b7791f;
+  --soft:#eef3ff; --soft2:#edf9f5; --code:#101828; --codeText:#e6edf7;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+  line-height:1.75;
+}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1500px;margin:auto}
+aside{
+  position:sticky;top:0;height:100vh;overflow:auto;padding:28px 20px;
+  background:#111827;color:#e5e7eb;border-right:1px solid #222b3b;
+}
+aside h1{font-size:18px;margin:0 0 6px;color:#fff}
+aside .sub{font-size:12px;color:#9ca3af;margin-bottom:22px}
+aside a{
+  display:block;color:#cbd5e1;text-decoration:none;padding:7px 10px;border-radius:8px;font-size:14px
+}
+aside a:hover{background:#1f2937;color:#fff}
+aside .group{margin:14px 0 6px;color:#7dd3fc;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+main{padding:42px 46px 80px;max-width:1120px;width:100%}
+.hero{
+  background:linear-gradient(135deg,#0f172a,#1e3a8a);
+  color:#fff;padding:38px;border-radius:18px;margin-bottom:28px;
+  box-shadow:0 14px 35px rgba(15,23,42,.14)
+}
+.hero h1{font-size:34px;line-height:1.2;margin:0 0 14px}
+.hero p{color:#dbeafe;max-width:850px;margin:0}
+.badges{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{background:rgba(255,255,255,.12);padding:6px 10px;border-radius:999px;font-size:13px}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;margin:20px 0}
+h2{font-size:27px;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+h3{font-size:21px;margin:26px 0 10px}
+h4{font-size:17px;margin:20px 0 8px}
+p{margin:10px 0}
+.lead{font-size:17px;color:#314056}
+.note,.tip,.warn{
+  padding:14px 16px;border-radius:12px;margin:16px 0;border-left:4px solid
+}
+.note{background:var(--soft);border-color:var(--accent)}
+.tip{background:var(--soft2);border-color:var(--accent2)}
+.warn{background:#fff7e8;border-color:var(--warn)}
+.formula{
+  background:#f8fafc;border:1px solid var(--line);border-radius:12px;
+  padding:14px 18px;margin:14px 0;overflow:auto
+}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top}
+th{background:#f2f5fa;text-align:left}
+code{font-family:Consolas,Menlo,monospace}
+pre{
+  background:var(--code);color:var(--codeText);padding:18px;border-radius:12px;
+  overflow:auto;line-height:1.55;font-size:13px
+}
+.flow{
+  background:#fbfcfe;border:1px dashed #b8c3d4;border-radius:12px;
+  padding:16px;font-family:Consolas,monospace;white-space:pre-wrap
+}
+.kpi{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0
+}
+.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi b{display:block;font-size:22px;color:#1d4ed8}
+.checklist li{margin:8px 0}
+.small{font-size:13px;color:var(--muted)}
+hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+a{color:#2457d6}
+@media(max-width:900px){
+  .layout{display:block}
+  aside{position:relative;height:auto}
+  main{padding:22px 14px 50px}
+  .hero{padding:24px}
+  .hero h1{font-size:27px}
+  .kpi{grid-template-columns:1fr}
+}
+@media print{
+  aside{display:none}
+  .layout{display:block}
+  body{background:#fff}
+  main{max-width:none;padding:0}
+  section,.hero{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside>
+  <h1>光计算基础学习手册</h1>
+  <div class="sub">第一阶段 · 从光场到可训练光学网络</div>
+  <div class="group">总览</div>
+  <a href="#goal">学习目标</a>
+  <a href="#map">知识地图</a>
+  <a href="#method">学习方法</a>
+
+  <div class="group">核心模块</div>
+  <a href="#field">1. 光场与复振幅</a>
+  <a href="#interference">2. 干涉</a>
+  <a href="#propagation">3. 衍射与传播</a>
+  <a href="#fresnel">4. Fresnel 衍射</a>
+  <a href="#fraunhofer">5. Fraunhofer 与傅里叶</a>
+  <a href="#spatial">6. 空间频率</a>
+  <a href="#lens">7. 透镜与 4f 系统</a>
+  <a href="#asm">8. Angular Spectrum</a>
+  <a href="#mask">9. 相位掩膜与 SLM</a>
+  <a href="#mzi">10. MZI 矩阵计算</a>
+  <a href="#nonlinear">11. 非线性问题</a>
+  <a href="#sampling">12. 采样与 FFT</a>
+
+  <div class="group">实践</div>
+  <a href="#code">Python 最小实验</a>
+  <a href="#schedule">10 天学习计划</a>
+  <a href="#quiz">检查题</a>
+  <a href="#papers">与论文的对应</a>
+</aside>
+
+<main>
+
+<div class="hero">
+  <h1>光计算与光生成模型：第一阶段完整学习资料</h1>
+  <p>
+    这份资料只保留对光学神经网络、D2NN、SLiM、LightGen、光学扩散模型真正有用的内容。
+    目标不是把传统光学教材从头学完，而是建立一条可直接进入科研的知识链：
+    <b>光场 → 传播 → 调制 → 傅里叶变换 → 探测 → 可训练网络</b>。
+  </p>
+  <div class="badges">
+    <span class="badge">通俗直觉</span>
+    <span class="badge">严谨公式</span>
+    <span class="badge">Python 实验</span>
+    <span class="badge">论文连接</span>
+    <span class="badge">科研导向</span>
+  </div>
+</div>
+
+<section id="goal">
+<h2>一、这一阶段的学习目标</h2>
+<p class="lead">
+学完这一部分后，你应该能够看到一张光学神经网络结构图，就知道“每一块在做什么数学运算”；看到一个传播公式，就知道怎样写成代码；看到一篇光计算论文，就知道它究竟在哪一步做了创新。
+</p>
+
+<div class="kpi">
+  <div><b>01</b>看懂光路</div>
+  <div><b>02</b>写出公式</div>
+  <div><b>03</b>实现代码</div>
+</div>
+
+<div class="tip">
+<b>最终能力标准：</b>
+你能独立解释 \(U=Ae^{i\phi}\)、Fresnel、Fraunhofer、ASM、4f、phase mask、MZI、\(I=|U|^2\)，并能自己写出最小传播仿真。
+</div>
+</section>
+
+<section id="map">
+<h2>二、知识地图</h2>
+
+<table>
+<tr><th>模块</th><th>核心问题</th><th>未来用途</th></tr>
+<tr><td>光场与复振幅</td><td>光如何用复数表示？</td><td>理解 amplitude / phase 编码</td></tr>
+<tr><td>干涉</td><td>为什么相位能改变亮暗？</td><td>MZI、相位计算、光学权重</td></tr>
+<tr><td>衍射</td><td>一个平面的光如何传播到另一个平面？</td><td>D2NN 基础</td></tr>
+<tr><td>Fresnel</td><td>近轴条件下怎样描述传播？</td><td>常用神经光学仿真</td></tr>
+<tr><td>Fraunhofer</td><td>为什么远场等于傅里叶变换？</td><td>理解光学 FFT</td></tr>
+<tr><td>空间频率</td><td>图像的“低频、高频”是什么？</td><td>滤波、卷积、特征提取</td></tr>
+<tr><td>透镜与 4f</td><td>透镜如何执行 Fourier transform？</td><td>卷积光计算</td></tr>
+<tr><td>Angular Spectrum</td><td>怎样更准确地模拟传播？</td><td>数值仿真主力</td></tr>
+<tr><td>相位掩膜 / SLM</td><td>光学网络的“权重”是什么？</td><td>D2NN 可训练参数</td></tr>
+<tr><td>MZI</td><td>集成光子芯片如何做矩阵乘？</td><td>光子 AI 加速器</td></tr>
+<tr><td>非线性</td><td>为什么纯光深度网络困难？</td><td>光生成模型核心瓶颈</td></tr>
+<tr><td>采样与 FFT</td><td>为什么仿真会 aliasing？</td><td>避免科研代码失真</td></tr>
+</table>
+</section>
+
+<section id="method">
+<h2>三、正确的学习方法</h2>
+<p>每个模块都用同样的五步学习法：</p>
+<ol>
+<li><b>先形成直觉：</b>它在物理上发生了什么？</li>
+<li><b>再看数学：</b>这个物理过程对应什么算子？</li>
+<li><b>再看代码：</b>怎样用 NumPy / PyTorch 写出来？</li>
+<li><b>再做实验：</b>改变参数后图像怎样变化？</li>
+<li><b>最后接论文：</b>论文在哪个环节做了创新？</li>
+</ol>
+
+<div class="warn">
+不要一开始直接上 LightGen、Stable Diffusion 或完整 FDTD。先自己做一个最小传播器，再做 D2NN，再进入生成模型。
+</div>
+</section>
+
+<section id="field">
+<h2>四、光场与复振幅</h2>
+
+<h3>1. 为什么用复数描述光？</h3>
+<p>真实电场可以写成：</p>
+<div class="formula">
+\[
+E(x,y,z,t)=A(x,y,z)\cos(\omega t+\phi(x,y,z))
+\]
+</div>
+
+<p>为了计算方便，通常用复数形式：</p>
+<div class="formula">
+\[
+\boxed{U(x,y,z)=A(x,y,z)e^{i\phi(x,y,z)}}
+\]
+</div>
+
+<p>这里：</p>
+<ul>
+<li>\(A\)：振幅 amplitude</li>
+<li>\(\phi\)：相位 phase</li>
+<li>\(U\)：复光场 complex optical field</li>
+</ul>
+
+<h3>2. 相机实际测到什么？</h3>
+<div class="formula">
+\[
+\boxed{I=|U|^2=A^2}
+\]
+</div>
+
+<p>
+相机通常不能直接看到 phase，只能看到 intensity。
+所以光学系统内部天然处理的是复数信息，但普通探测器最后只把它投影成强度。
+</p>
+
+<div class="tip">
+<b>科研直觉：</b>电子神经网络通常处理实数，而光学系统天然处理复数。Amplitude 和 phase 都可以承载信息。
+</div>
+</section>
+
+<section id="interference">
+<h2>五、干涉：为什么“相位”能改变亮暗</h2>
+
+<p>两束光：</p>
+<div class="formula">
+\[
+U_1=Ae^{i\phi_1},\qquad U_2=Ae^{i\phi_2}
+\]
+</div>
+
+<p>叠加后：</p>
+<div class="formula">
+\[
+U=U_1+U_2
+\]
+</div>
+
+<p>探测强度：</p>
+<div class="formula">
+\[
+I=|U_1+U_2|^2
+=|U_1|^2+|U_2|^2+2A^2\cos(\phi_1-\phi_2)
+\]
+</div>
+
+<p>关键就是：</p>
+<div class="formula">
+\[
+\boxed{2A^2\cos(\Delta\phi)}
+\]
+</div>
+
+<p>因此即使两束光振幅完全一样，只要相位不同，最终输出就可能从“最亮”变成“完全抵消”。</p>
+
+<div class="note">
+<b>最重要直觉：</b>光学计算不是简单地“把亮度相加”，而是先把复振幅相加，再取平方得到强度。
+</div>
+</section>
+
+<section id="propagation">
+<h2>六、衍射与传播：光为什么能“做计算”</h2>
+
+<p>设输入平面光场为 \(U_0(x,y)\)，传播距离 \(z\) 后为：</p>
+<div class="formula">
+\[
+\boxed{U_z=\mathcal{P}_z(U_0)}
+\]
+</div>
+
+<p>\(\mathcal{P}_z\) 是传播算子。它本身就是一个线性算子。</p>
+
+<p>神经网络一层：</p>
+<div class="formula">
+\[
+x_{l+1}=W_lx_l
+\]
+</div>
+
+<p>光传播：</p>
+<div class="formula">
+\[
+U_{l+1}=\mathcal{P}_zU_l
+\]
+</div>
+
+<p>因此，自由空间传播本质上已经是一种线性计算。</p>
+
+<h3>Huygens–Fresnel 直觉</h3>
+<p>把波面上的每一个点看成一个新的小球面波源，那么下一平面上的任意一点，都是前一平面所有点贡献的叠加。</p>
+
+<div class="formula">
+\[
+U(x,y,z)=\iint U(x',y',0)\,h(x-x',y-y',z)\,dx'dy'
+\]
+</div>
+
+<p>这就是卷积：</p>
+<div class="formula">
+\[
+\boxed{U_z=U_0*h_z}
+\]
+</div>
+
+<div class="tip">
+所以自由空间传播和信号处理、CNN 会天然联系起来：传播本身就是一种卷积型线性变换。
+</div>
+</section>
+
+<section id="fresnel">
+<h2>七、Fresnel 衍射</h2>
+
+<p>在近轴近似下，Fresnel propagation 可写成：</p>
+<div class="formula">
+\[
+U(x,y,z)=
+\frac{e^{ikz}}{i\lambda z}
+\iint
+U(x',y',0)
+\exp\left[
+\frac{ik}{2z}
+\left((x-x')^2+(y-y')^2\right)
+\right]
+dx'dy'
+\]
+</div>
+
+<p>其中：</p>
+<div class="formula">
+\[
+k=\frac{2\pi}{\lambda}
+\]
+</div>
+
+<p>定义 Fresnel impulse response：</p>
+<div class="formula">
+\[
+h_z(x,y)=
+\frac{e^{ikz}}{i\lambda z}
+\exp\left[
+\frac{ik}{2z}(x^2+y^2)
+\right]
+\]
+</div>
+
+<p>于是：</p>
+<div class="formula">
+\[
+\boxed{U_z=U_0*h_z}
+\]
+</div>
+
+<h3>D2NN 一层是什么？</h3>
+
+<p>phase mask：</p>
+<div class="formula">
+\[
+T_l(x,y)=e^{i\phi_l(x,y)}
+\]
+</div>
+
+<p>先调相：</p>
+<div class="formula">
+\[
+U'_l=U_lT_l
+\]
+</div>
+
+<p>再传播：</p>
+<div class="formula">
+\[
+\boxed{U_{l+1}=\mathcal P_z\left[U_le^{i\phi_l}\right]}
+\]
+</div>
+
+<div class="flow">Field
+  ↓
+Phase Mask
+  ↓
+Propagation
+  ↓
+Phase Mask
+  ↓
+Propagation
+  ↓
+Detector</div>
+
+<div class="note">
+D2NN 的核心并不神秘：反复执行“相位调制 + 传播”。
+</div>
+</section>
+
+<section id="fraunhofer">
+<h2>八、Fraunhofer 衍射：为什么远场是傅里叶变换</h2>
+
+<p>当传播距离足够远时，Fresnel 模型进一步简化：</p>
+<div class="formula">
+\[
+\boxed{U(x,y,z)\propto \mathcal F\{U(x',y')\}}
+\]
+</div>
+
+<p>也就是说：</p>
+<div class="formula">
+\[
+\boxed{\text{Far-field diffraction} \approx \text{Fourier transform}}
+\]
+</div>
+
+<h3>经典例子：单缝</h3>
+
+<p>如果输入孔径：</p>
+<div class="formula">
+\[
+U(x)=\operatorname{rect}\left(\frac{x}{a}\right)
+\]
+</div>
+
+<p>傅里叶变换：</p>
+<div class="formula">
+\[
+\mathcal F\{\operatorname{rect}(x/a)\}
+=a\,\operatorname{sinc}(af_x)
+\]
+</div>
+
+<p>远场强度：</p>
+<div class="formula">
+\[
+I\propto \operatorname{sinc}^2(af_x)
+\]
+</div>
+
+<div class="tip">
+单缝衍射条纹，本质上就是“矩形孔径的 Fourier transform”。
+</div>
+</section>
+
+<section id="spatial">
+<h2>九、空间频率</h2>
+
+<p>图像可以看成很多不同空间频率的波叠加：</p>
+<div class="formula">
+\[
+f(x,y)=\sum A_{f_x,f_y}e^{i2\pi(f_xx+f_yy)}
+\]
+</div>
+
+<table>
+<tr><th>空间频率</th><th>图像含义</th></tr>
+<tr><td>低频</td><td>大尺度结构、轮廓、缓慢变化</td></tr>
+<tr><td>高频</td><td>边缘、纹理、细节</td></tr>
+</table>
+
+<p>因此 Fourier plane 的中心通常代表低频，外围代表高频。</p>
+
+<h3>Low-pass filter</h3>
+<div class="formula">
+\[
+H(f_x,f_y)=
+\begin{cases}
+1,&f<f_c\\
+0,&f\ge f_c
+\end{cases}
+\]
+</div>
+
+<p>再做：</p>
+<div class="formula">
+\[
+I'=\mathcal F^{-1}\{H\mathcal F(I)\}
+\]
+</div>
+
+<p>输出会变模糊，因为高频细节被删除。</p>
+</section>
+
+<section id="lens">
+<h2>十、透镜与 4f 系统</h2>
+
+<p>理想薄透镜引入二次相位：</p>
+<div class="formula">
+\[
+\boxed{
+T_{\mathrm{lens}}(x,y)=
+\exp\left[-i\frac{k}{2f}(x^2+y^2)\right]
+}
+\]
+</div>
+
+<p>如果输入位于前焦面，则后焦面近似得到：</p>
+<div class="formula">
+\[
+\boxed{U_f(x,y)\propto\mathcal F\{U_0\}}
+\]
+</div>
+
+<p>所以透镜可以物理执行二维 Fourier transform。</p>
+
+<h3>4f 系统</h3>
+<div class="flow">Object
+  │ f
+Lens 1
+  │ f
+Fourier Plane
+  │ f
+Lens 2
+  │ f
+Image Plane</div>
+
+<p>数学上：</p>
+<div class="formula">
+\[
+\boxed{
+U_{\mathrm{out}}=
+\mathcal F^{-1}\left[
+H\,\mathcal F(U_{\mathrm{in}})
+\right]
+}
+\]
+</div>
+
+<p>根据卷积定理：</p>
+<div class="formula">
+\[
+y=h*x
+\quad\Longleftrightarrow\quad
+\mathcal F(y)=\mathcal F(h)\mathcal F(x)
+\]
+</div>
+
+<div class="note">
+所以 4f 系统天然可以被理解成一个 optical convolution engine。
+</div>
+</section>
+
+<section id="asm">
+<h2>十一、Angular Spectrum Method（ASM）</h2>
+
+<p>任意复杂光场都可以分解成许多平面波：</p>
+<div class="formula">
+\[
+U(x,y)=
+\iint A(f_x,f_y)
+e^{i2\pi(f_xx+f_yy)}
+df_xdf_y
+\]
+</div>
+
+<p>其中：</p>
+<div class="formula">
+\[
+A(f_x,f_y)=\mathcal F[U(x,y)]
+\]
+</div>
+
+<p>每个频率分量传播 \(z\) 后乘上传播相位：</p>
+<div class="formula">
+\[
+H(f_x,f_y,z)=e^{ik_zz}
+\]
+</div>
+
+<p>其中：</p>
+<div class="formula">
+\[
+k_z=\sqrt{k^2-k_x^2-k_y^2}
+\]
+</div>
+
+<p>最终：</p>
+<div class="formula">
+\[
+\boxed{
+U_z=
+\mathcal F^{-1}
+\left\{
+\mathcal F(U_0)\,H_z
+\right\}
+}
+\]
+</div>
+
+<pre><code>U_fft = torch.fft.fft2(U)
+U_fft = U_fft * H
+U_z   = torch.fft.ifft2(U_fft)</code></pre>
+
+<table>
+<tr><th></th><th>Fresnel</th><th>Angular Spectrum</th></tr>
+<tr><td>原理</td><td>近轴近似</td><td>平面波分解</td></tr>
+<tr><td>精度</td><td>高</td><td>通常更通用</td></tr>
+<tr><td>实现</td><td>FFT</td><td>FFT</td></tr>
+<tr><td>用途</td><td>D2NN 常用</td><td>高精度传播常用</td></tr>
+</table>
+</section>
+
+<section id="mask">
+<h2>十二、相位掩膜、SLM 与“光学权重”</h2>
+
+<p>光学网络里的可训练参数，经常不是一个普通矩阵，而是相位分布：</p>
+<div class="formula">
+\[
+\phi(x,y)
+\]
+</div>
+
+<p>phase-only mask 对光场执行：</p>
+<div class="formula">
+\[
+\boxed{U_{\mathrm{out}}=U_{\mathrm{in}}e^{i\phi(x,y)}}
+\]
+</div>
+
+<p>因为：</p>
+<div class="formula">
+\[
+|e^{i\phi}|=1
+\]
+</div>
+
+<p>所以理想 phase mask 不直接改变强度，只改变 phase。</p>
+
+<p>但传播以后：</p>
+<div class="flow">phase modulation
+        ↓
+propagation
+        ↓
+interference
+        ↓
+intensity redistribution</div>
+
+<p>因此可以通过控制相位，间接控制最终 detector 上的亮暗分布。</p>
+
+<div class="tip">
+D2NN 的本质不是“直接决定哪个像素亮”，而是控制不同路径在输出处怎样相长或相消干涉。
+</div>
+</section>
+
+<section id="mzi">
+<h2>十三、MZI：集成光子芯片如何做矩阵乘</h2>
+
+<p>Mach–Zehnder Interferometer（MZI）由分束器、两条路径和相位调制器组成。</p>
+
+<div class="flow">          ┌── phase φ1 ──┐
+Input ─ BS               BS ─ Output
+          └── phase φ2 ──┘</div>
+
+<p>通过控制相位差：</p>
+<div class="formula">
+\[
+\Delta\phi=\phi_1-\phi_2
+\]
+</div>
+
+<p>可以实现类似二维旋转：</p>
+<div class="formula">
+\[
+R(\theta)=
+\begin{bmatrix}
+\cos\theta & -\sin\theta\\
+\sin\theta & \cos\theta
+\end{bmatrix}
+\]
+</div>
+
+<p>许多 MZI 组成 mesh 后，可以通过矩阵分解实现：</p>
+<div class="formula">
+\[
+W=U\Sigma V^\dagger
+\]
+</div>
+
+<p>从而执行：</p>
+<div class="formula">
+\[
+\boxed{y=Wx}
+\]
+</div>
+
+<table>
+<tr><th>D2NN / Free-space</th><th>MZI / Integrated Photonics</th></tr>
+<tr><td>自由空间传播</td><td>波导传播</td></tr>
+<tr><td>衍射</td><td>干涉网络</td></tr>
+<tr><td>SLM / phase plate</td><td>phase shifter</td></tr>
+<tr><td>天然适合大规模图像并行</td><td>天然适合可编程矩阵运算</td></tr>
+</table>
+</section>
+
+<section id="nonlinear">
+<h2>十四、为什么“非线性”是光计算的核心瓶颈</h2>
+
+<p>传播是线性的：</p>
+<div class="formula">
+\[
+U_2=HU_1
+\]
+</div>
+
+<p>相位掩膜也是线性的：</p>
+<div class="formula">
+\[
+U_2=DU_1
+\]
+</div>
+
+<p>连续很多层：</p>
+<div class="formula">
+\[
+U_L=H_LD_L\cdots H_1D_1U_0
+\]
+</div>
+
+<p>最终仍然等价于：</p>
+<div class="formula">
+\[
+\boxed{U_L=W_{\mathrm{eff}}U_0}
+\]
+</div>
+
+<p>也就是说，如果没有非线性，无论堆多少线性层，本质上仍可合并成一个大线性变换。</p>
+
+<p>普通神经网络真正强大的关键在：</p>
+<div class="formula">
+\[
+x_{l+1}=\sigma(W_lx_l)
+\]
+</div>
+
+<p>其中 \(\sigma\) 是 ReLU、GELU、SiLU 等非线性函数。</p>
+
+<h3>探测器本身是非线性的</h3>
+
+<div class="formula">
+\[
+\boxed{I=|U|^2}
+\]
+</div>
+
+<p>但探测器会把 optical signal 转成 electrical signal，于是通常需要：</p>
+
+<div class="flow">Optical
+  ↓
+Photodetector
+  ↓
+Electrical nonlinear
+  ↓
+DAC
+  ↓
+Modulator
+  ↓
+Optical</div>
+
+<p>这会带来 O/E/O 转换的功耗、延迟和数据搬运开销。</p>
+
+<div class="warn">
+这正是为什么“纯光深度生成模型”远比“纯光矩阵乘法”困难。
+</div>
+</section>
+
+<section id="sampling">
+<h2>十五、采样理论与 FFT</h2>
+
+<p>实际数值模拟的是离散网格：</p>
+<div class="formula">
+\[
+U[m,n]
+\]
+</div>
+
+<p>若网格大小 \(N\times N\)，像素间距为 \(\Delta x\)，则物理尺寸：</p>
+<div class="formula">
+\[
+L=N\Delta x
+\]
+</div>
+
+<p>Nyquist 最大空间频率约为：</p>
+<div class="formula">
+\[
+\boxed{f_{\max}=\frac{1}{2\Delta x}}
+\]
+</div>
+
+<p>如果传播产生的频率超过此范围，就会出现 aliasing。</p>
+
+<h3>为什么 FFT 是光学仿真的核心？</h3>
+
+<p>直接积分很慢，而利用卷积定理：</p>
+<div class="formula">
+\[
+U_z=U_0*h
+\]
+</div>
+
+<p>可以改写为：</p>
+<div class="formula">
+\[
+\boxed{
+U_z=
+\mathcal F^{-1}
+\left[
+\mathcal F(U_0)H
+\right]
+}
+\]
+</div>
+
+<p>复杂度从直接积分的极高代价，降低到 FFT 的 \(O(N^2\log N)\) 量级。</p>
+</section>
+
+<section>
+<h2>十六、必须记住的 10 个核心公式</h2>
+
+<table>
+<tr><th>概念</th><th>公式</th></tr>
+<tr><td>Complex field</td><td>\(U=Ae^{i\phi}\)</td></tr>
+<tr><td>Intensity</td><td>\(I=|U|^2\)</td></tr>
+<tr><td>Interference</td><td>\(I=|U_1+U_2|^2\)</td></tr>
+<tr><td>Propagation</td><td>\(U_z=\mathcal P_zU_0\)</td></tr>
+<tr><td>Convolution propagation</td><td>\(U_z=U_0*h_z\)</td></tr>
+<tr><td>Fresnel kernel</td><td>\(h_z\sim e^{ik(x^2+y^2)/(2z)}\)</td></tr>
+<tr><td>Fraunhofer</td><td>\(U_z\sim\mathcal F(U_0)\)</td></tr>
+<tr><td>Phase mask</td><td>\(U'=Ue^{i\phi}\)</td></tr>
+<tr><td>ASM</td><td>\(U_z=\mathcal F^{-1}\{\mathcal F(U)H_z\}\)</td></tr>
+<tr><td>4f filtering</td><td>\(U_o=\mathcal F^{-1}\{H\mathcal F(U_i)\}\)</td></tr>
+</table>
+</section>
+
+<section id="code">
+<h2>十七、Python 最小实验</h2>
+
+<h3>实验 1：生成第一束数字光</h3>
+<pre><code>import numpy as np
+import matplotlib.pyplot as plt
+
+N = 512
+dx = 10e-6
+wavelength = 532e-9
+
+x = (np.arange(N) - N/2) * dx
+X, Y = np.meshgrid(x, x)
+
+w0 = 0.5e-3
+
+U0 = np.exp(-(X**2 + Y**2) / w0**2)
+
+plt.imshow(np.abs(U0)**2)
+plt.title("Input intensity")
+plt.show()</code></pre>
+
+<h3>实验 2：Angular Spectrum propagation</h3>
+<pre><code>def angular_spectrum(U, wavelength, dx, z):
+    N = U.shape[0]
+
+    fx = np.fft.fftfreq(N, d=dx)
+    FY, FX = np.meshgrid(fx, fx)
+
+    k = 2 * np.pi / wavelength
+
+    argument = (
+        k**2
+        - (2*np.pi*FX)**2
+        - (2*np.pi*FY)**2
+    )
+
+    kz = np.sqrt(argument.astype(np.complex128))
+    H = np.exp(1j * kz * z)
+
+    U_fft = np.fft.fft2(U)
+    Uz = np.fft.ifft2(U_fft * H)
+
+    return Uz</code></pre>
+
+<pre><code>Uz = angular_spectrum(
+    U0,
+    wavelength,
+    dx,
+    z=0.1
+)
+
+plt.imshow(np.abs(Uz)**2)
+plt.title("Propagated intensity")
+plt.show()</code></pre>
+
+<h3>实验 3：相位掩膜</h3>
+<pre><code>phase = np.random.rand(N, N) * 2*np.pi
+
+U1 = U0 * np.exp(1j * phase)
+
+U2 = angular_spectrum(
+    U1,
+    wavelength,
+    dx,
+    0.1
+)
+
+plt.imshow(np.abs(U2)**2)
+plt.title("Phase → interference → intensity")
+plt.show()</code></pre>
+
+<p>这个实验验证一个关键事实：</p>
+<div class="formula">
+\[
+|U_1|^2=|U_0|^2
+\]
+</div>
+
+<p>也就是说 phase mask 前后的强度不变，但传播后强度分布发生巨大变化。</p>
+
+<h3>实验 4：孔径与 Fourier diffraction</h3>
+<pre><code>a = 0.5e-3
+
+U = (
+    (np.abs(X) &lt; a/2) &
+    (np.abs(Y) &lt; a/2)
+).astype(float)
+
+F = np.fft.fftshift(
+    np.fft.fft2(U)
+)
+
+I = np.abs(F)**2
+
+plt.imshow(np.log1p(I))
+plt.title("Far-field diffraction")
+plt.show()</code></pre>
+
+<h3>实验 5：数字 4f low-pass filter</h3>
+<pre><code>F = np.fft.fftshift(
+    np.fft.fft2(U)
+)
+
+# 注意：真实代码应在频率坐标上构造 mask
+H = np.zeros_like(F, dtype=float)
+
+cy, cx = np.array(F.shape) // 2
+radius = 40
+
+Yg, Xg = np.ogrid[:F.shape[0], :F.shape[1]]
+mask = (Xg-cx)**2 + (Yg-cy)**2 &lt;= radius**2
+H[mask] = 1
+
+F_filtered = F * H
+
+U_out = np.fft.ifft2(
+    np.fft.ifftshift(F_filtered)
+)
+
+plt.imshow(np.abs(U_out)**2)
+plt.title("Low-pass filtered output")
+plt.show()</code></pre>
+</section>
+
+<section id="schedule">
+<h2>十八、10 天学习计划</h2>
+
+<table>
+<tr><th>天数</th><th>学习内容</th><th>必须完成的产出</th></tr>
+<tr><td>Day 1</td><td>复振幅、phase、intensity</td><td>自己推导双光束干涉</td></tr>
+<tr><td>Day 2</td><td>Fourier transform 与空间频率</td><td>对一张图做 FFT 并解释中心与边缘</td></tr>
+<tr><td>Day 3</td><td>Huygens + diffraction</td><td>解释 propagation = convolution</td></tr>
+<tr><td>Day 4</td><td>Fresnel diffraction</td><td>写一个 Fresnel propagation</td></tr>
+<tr><td>Day 5</td><td>Angular Spectrum</td><td>独立写 ASM</td></tr>
+<tr><td>Day 6</td><td>Fraunhofer</td><td>模拟单缝/方孔衍射</td></tr>
+<tr><td>Day 7</td><td>Lens + 4f</td><td>实现 low-pass / high-pass filtering</td></tr>
+<tr><td>Day 8</td><td>Phase mask / SLM</td><td>验证 phase → intensity redistribution</td></tr>
+<tr><td>Day 9</td><td>MZI</td><td>理解 2×2 rotation 与矩阵乘</td></tr>
+<tr><td>Day 10</td><td>总结</td><td>自己画完整“光计算数据流”</td></tr>
+</table>
+</section>
+
+<section id="quiz">
+<h2>十九、检查题：能答出来才算真正学会</h2>
+
+<ol class="checklist">
+<li>为什么 \(Ae^{i\phi}\) 中的 phase 相机看不到，却能影响最终强度？</li>
+<li>为什么 free-space propagation 是线性运算？</li>
+<li>为什么 diffraction 可以写成 convolution？</li>
+<li>为什么 far-field diffraction 是 Fourier transform？</li>
+<li>为什么 lens 能做 Fourier transform？</li>
+<li>为什么 4f system 能做 convolution / filtering？</li>
+<li>D2NN 的 trainable parameter 到底是什么？</li>
+<li>为什么 100 层纯 phase-mask network 依然可能本质上只是线性系统？</li>
+<li>MZI 和 D2NN 在计算机制上有什么不同？</li>
+<li>为什么 detector 的 \(I=|U|^2\) 虽然提供非线性，却同时引入新的系统问题？</li>
+</ol>
+
+<div class="tip">
+如果这 10 题你能不查资料、用自己的话讲清楚，第一阶段就算真正过关。
+</div>
+</section>
+
+<section id="papers">
+<h2>二十、这些基础知识与后续论文的关系</h2>
+
+<table>
+<tr><th>论文 / 方向</th><th>你现在学到的基础</th></tr>
+<tr><td>Optical Generative Models</td><td>phase encoding、diffraction、interference、intensity detection</td></tr>
+<tr><td>D2NN</td><td>phase mask + propagation + detector</td></tr>
+<tr><td>SLiM</td><td>大量线性光学算子的组织、深度与误差传播</td></tr>
+<tr><td>LightGen</td><td>大规模 photonic neurons、latent-space optical computing</td></tr>
+<tr><td>Photonic Transformer</td><td>MZI / interference / matrix multiplication</td></tr>
+<tr><td>Photonic Diffusion</td><td>linear optical operator + nonlinear bottleneck + repeated propagation + I/O</td></tr>
+</table>
+
+<div class="flow">基础光学
+   ↓
+D2NN / MZI
+   ↓
+光神经网络
+   ↓
+光生成模型
+   ↓
+Photonic Diffusion
+   ↓
+Few-step / Hybrid / Physics-native
+   ↓
+你的研究创新</div>
+</section>
+
+<section>
+<h2>二十一、推荐资料</h2>
+
+<h3>主教材</h3>
+<p><b>Joseph W. Goodman — Introduction to Fourier Optics</b></p>
+<p>建议优先掌握：</p>
+<ul>
+<li>2D Fourier analysis</li>
+<li>Scalar diffraction theory</li>
+<li>Fresnel / Fraunhofer diffraction</li>
+<li>Coherent optical systems</li>
+<li>Optical information processing</li>
+</ul>
+
+<h3>辅助课程</h3>
+<p><b>MIT 2.71 Optics</b>：重点看 Fourier transforms、Fraunhofer、Fresnel、Spatial Filtering、4f system。</p>
+
+<div class="warn">
+不要把学习目标变成“读完教材”。目标是：每学一个概念，就能写一个最小实验验证它。
+</div>
+</section>
+
+<section>
+<h2>二十二、这一阶段结束时，你应该拥有的文件</h2>
+
+<pre><code>01_complex_field.py
+02_interference.py
+03_fourier_image.py
+04_fresnel.py
+05_angular_spectrum.py
+06_aperture_diffraction.py
+07_4f_filter.py
+08_phase_mask.py
+09_mzi_notes.md
+10_summary.md</code></pre>
+
+<p>完成这一步之后，再进入第二阶段：</p>
+<div class="formula">
+\[
+\boxed{\text{D2NN + MNIST Optical Classifier}}
+\]
+</div>
+
+<p>那时你会第一次把今天学到的传播公式真正变成一个“可训练光学神经网络”。</p>
+</section>
+
+<p class="small" style="text-align:center;margin-top:28px;">
+光计算与光生成模型 · 第一阶段学习手册
+</p>
+
+</main>
+</div>
+</body>
+</html>
