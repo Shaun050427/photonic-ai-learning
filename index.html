@@ -83,6 +83,24 @@ pre{
 .small{font-size:13px;color:var(--muted)}
 hr{border:none;border-top:1px solid var(--line);margin:26px 0}
 a{color:#2457d6}
+.progress-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.progress-toolbar button,.sync-panel button,.progress-actions button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;color:var(--text);cursor:pointer}
+.progress-toolbar button:hover,.sync-panel button:hover,.progress-actions button:hover{border-color:var(--accent)}
+.progress-toolbar .primary,.sync-panel .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.progress-item{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fbfcfe}
+.progress-item label{display:flex;gap:8px;align-items:flex-start;font-weight:600;cursor:pointer}
+.progress-item input[type=checkbox]{margin-top:7px;accent-color:var(--accent)}
+.progress-item textarea{width:100%;min-height:70px;margin-top:10px;padding:9px;border:1px solid var(--line);border-radius:8px;resize:vertical;font:inherit}
+.sync-panel{border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:18px;background:#f8fafc}
+.sync-panel .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.sync-panel input[type=password]{min-width:260px;flex:1;padding:9px;border:1px solid var(--line);border-radius:8px}
+.sync-panel .status{font-weight:700;color:#1e40af}
+.progress-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.progress-actions input{display:none}
+.conflict{border-left:4px solid #dc2626;background:#fff4f2;padding:14px;border-radius:9px;margin-top:12px}
+.history-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:9px 0}
+.history-item span{overflow-wrap:anywhere}
 @media(max-width:900px){
   .layout{display:block}
   aside{position:relative;height:auto}
@@ -90,6 +108,7 @@ a{color:#2457d6}
   .hero{padding:24px}
   .hero h1{font-size:27px}
   .kpi{grid-template-columns:1fr}
+  .progress-grid{grid-template-columns:1fr}
 }
 @media print{
   aside{display:none}
@@ -110,6 +129,7 @@ a{color:#2457d6}
   <a href="#goal">学习目标</a>
   <a href="#map">知识地图</a>
   <a href="#method">学习方法</a>
+  <a href="#progress">学习进度与云同步</a>
 
   <div class="group">核心模块</div>
   <a href="#field">1. 光场与复振幅</a>
@@ -165,6 +185,30 @@ a{color:#2457d6}
 <div class="tip">
 <b>最终能力标准：</b>
 你能独立解释 \(U=Ae^{i\phi}\)、Fresnel、Fraunhofer、ASM、4f、phase mask、MZI、\(I=|U|^2\)，并能自己写出最小传播仿真。
+</div>
+</section>
+
+<section id="progress">
+<h2>学习进度与私人笔记</h2>
+<p>勾选完成的模块和学习日，在每一天写下自己的推导、实验结果与疑问。输入立即保存在本机；连接后写入独立的私有 GitHub 仓库。</p>
+<div class="progress-toolbar">
+  <strong id="progressSummary">0 / 12 模块 · 0 / 10 天</strong>
+  <button id="syncOpen" type="button">云同步设置</button>
+  <span id="syncStatus" role="status" aria-live="polite">尚未连接 · 本机保存</span>
+</div>
+<h3>十二个知识模块</h3>
+<div id="moduleProgress" class="progress-grid"></div>
+<h3>十天学习计划与笔记</h3>
+<div id="dayProgress" class="progress-grid"></div>
+<div id="syncPanel" class="sync-panel" hidden>
+  <h3>GitHub 私人进度同步</h3>
+  <p>公开课程：<code>photonic-ai-learning</code>；私有数据：<code>Shaun050427/photonic-ai-learning-data</code> 中的 <code>data/photonic-progress.json</code>。</p>
+  <p>请为该私有仓库单独创建 Fine-grained personal access token，只授权此仓库的 <b>Contents: Read and write</b>。Token 只放在此设备当前浏览器会话中，关闭浏览器后需重新填写。不要把 Token 放进仓库、笔记、备份或截图。</p>
+  <div class="row"><input id="syncToken" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴此私有仓库的 GitHub Token" aria-label="GitHub Token"><button id="syncConnect" class="primary" type="button">连接并同步</button><button id="syncDisconnect" type="button">移除此设备 Token</button></div>
+  <div class="progress-actions"><button id="syncNow" type="button">立即同步</button><button id="historyOpen" type="button">查看版本历史</button><button id="progressExport" type="button">导出本机备份</button><label><button id="progressImportButton" type="button">导入备份</button><input id="progressImport" type="file" accept="application/json"></label></div>
+  <p class="small">打开页面、恢复焦点和每隔 30 秒检查云端；编辑停止 3 秒后尝试提交。两台设备同时修改时会暂停并让你选择保留的版本。可从 GitHub 提交历史恢复旧版。</p>
+  <div id="syncConflict" class="conflict" hidden><b>检测到两台设备的修改冲突</b><p>本机和云端都有不同的修改，系统已暂停自动提交。</p><div class="progress-actions"><button id="conflictExport" type="button">下载本机备份</button><button id="conflictRemote" type="button">采用云端版本</button><button id="conflictLocal" type="button">保留本机并提交新版</button></div></div>
+  <div id="historyPanel" hidden><h3>最近版本</h3><div id="historyList"></div></div>
 </div>
 </section>
 
@@ -1097,5 +1141,6 @@ Few-step / Hybrid / Physics-native
 
 </main>
 </div>
+<script defer src="./progress-sync.js"></script>
 </body>
 </html>
